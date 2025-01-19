@@ -57,7 +57,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(water_pump_control_GPIO_Port, water_pump_control_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, ams_fans_control_Pin|radiator_fan_control_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ams_fans_control_GPIO_Port, ams_fans_control_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : Led_Debug_1_Pin Led_Debug_2_Pin Led_Debug_3_Pin */
   GPIO_InitStruct.Pin = Led_Debug_1_Pin|Led_Debug_2_Pin|Led_Debug_3_Pin;
@@ -73,12 +73,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(water_pump_control_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ams_fans_control_Pin radiator_fan_control_Pin */
-  GPIO_InitStruct.Pin = ams_fans_control_Pin|radiator_fan_control_Pin;
+  /*Configure GPIO pin : ams_fans_control_Pin */
+  GPIO_InitStruct.Pin = ams_fans_control_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(ams_fans_control_GPIO_Port, &GPIO_InitStruct);
 
 }
 

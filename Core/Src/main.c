@@ -20,6 +20,7 @@
 #include "main.h"
 #include "adc.h"
 #include "can.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -52,6 +53,8 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+
+void PWMDutyCycleSet(uint16_t ChannelName, uint32_t dutyCycle); // Function prototype for setting the duty cycle of the PWM signal
 
 /* USER CODE END PFP */
 
@@ -93,8 +96,11 @@ int main(void)
   MX_ADC2_Init();
   MX_CAN_Init();
   MX_USART1_UART_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
+
+ 
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,7 +108,14 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+      HAL_GPIO_TogglePin(GPIOC, Led_Debug_1_Pin);
+      for (uint32_t i = 0; i < 100; i = i + 10)
+      {
+        PWMDutyCycleSet(1, i);
+        HAL_Delay(500);
+        
+      }
+      
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -155,6 +168,25 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+// Function to set the duty cycle of the PWM signal 
+
+void PWMDutyCycleSet(uint16_t ChannelName, uint32_t dutyCycle)
+{
+  switch (ChannelName)
+  {
+  case 1:     // ChannelName: 1 (radiator_fan_control_Pin)
+      {
+    TIM4->CCR1 = dutyCycle;
+    HAL_TIM_PWM_Start(&htim4, radiator_fan_control_Pin);
+    break;
+      }
+  default:
+    break;
+  }
+
+}
+
 
 /* USER CODE END 4 */
 

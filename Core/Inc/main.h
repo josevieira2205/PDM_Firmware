@@ -63,6 +63,8 @@ void Error_Handler(void);
 #define Led_Debug_2_GPIO_Port GPIOC
 #define Led_Debug_3_Pin GPIO_PIN_15
 #define Led_Debug_3_GPIO_Port GPIOC
+#define Led_LV_Pin GPIO_PIN_10
+#define Led_LV_GPIO_Port GPIOB
 #define water_pump_control_Pin GPIO_PIN_15
 #define water_pump_control_GPIO_Port GPIOA
 #define ams_fans_control_Pin GPIO_PIN_4

@@ -52,7 +52,9 @@
 uint16_t current = 0; 
 uint16_t voltage = 0;
 uint16_t rawValeus [2];
-char msg[50]; 
+uint16_t voltage_int; 
+uint16_t voltage_frac;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,7 +62,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
 void PWMDutyCycleSet(uint16_t ChannelName, uint32_t dutyCycle); // Function prototype for setting the duty cycle of the PWM signal
-
+void SendData(uint16_t raw_voltage); // Function prototype for sending data over CAN bus
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -127,13 +129,11 @@ int main(void)
         for (uint8_t i = 0; i < hadc1.Init.NbrOfConversion; i++){
             current = rawValeus[0]; // Current value
             voltage = rawValeus[1]; // Voltage value
-
-            
         }
-            sprintf(msg, "Current: %d, Voltage: %d\n", current, voltage); // Print the current and voltage values
-            HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY); // Transmit the message to the UART
-            HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); 
-            HAL_Delay(1000); // Delay for 1 second
+
+        SendData(voltage); // Send the voltage value over CAN bus  
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); 
+        HAL_Delay(1000); // Delay for 1 second
  
       }
       
@@ -189,6 +189,18 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+
+void SendData(uint16_t raw_voltage)
+{
+    char msg[100]; // Message buffer
+
+    voltage_int = raw_voltage * 28.5 / 4095; // Voltage value
+    voltage_frac = (raw_voltage * 28500 / 4095) % 1000; // Voltage value
+
+    sprintf(msg, "Voltage: %d.%03d\n ",voltage_int,voltage_frac); // Print the current and voltage values
+    HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY); // Transmit the message to the UART
+}
 
 // Function to set the duty cycle of the PWM signal 
 

@@ -20,13 +20,15 @@
 #include "main.h"
 #include "adc.h"
 #include "can.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +49,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint16_t current = 0; 
+uint16_t voltage = 0;
+uint16_t rawValeus [2];
+char msg[50]; 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,7 +65,14 @@ void PWMDutyCycleSet(uint16_t ChannelName, uint32_t dutyCycle); // Function prot
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t convCompleted = 0; // Variable to check if the conversion is completed
 
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+
+uint8_t convCompleted = 1; // Set the conversion completed flag to 1
+//HAL_ADC_Start_IT(&hadc1); // Start the ADC in interrupt mode
+}
 /* USER CODE END 0 */
 
 /**
@@ -92,13 +104,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
-  MX_ADC2_Init();
   MX_CAN_Init();
   MX_USART1_UART_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)rawValeus, 2); // Start the ADC in DMA mode
 
  
   /* USER CODE END 2 */
@@ -108,15 +120,24 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-      HAL_GPIO_TogglePin(GPIOC, Led_Debug_1_Pin);
-      for (uint32_t i = 0; i < 100; i = i + 10)
+
+    /* USER CODE BEGIN 3 */
+      while (!convCompleted)
       {
-        PWMDutyCycleSet(1, i);
-        HAL_Delay(500);
-        
+        for (uint8_t i = 0; i < hadc1.Init.NbrOfConversion; i++){
+            current = rawValeus[0]; // Current value
+            voltage = rawValeus[1]; // Voltage value
+
+            
+        }
+            sprintf(msg, "Current: %d, Voltage: %d\n", current, voltage); // Print the current and voltage values
+            HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY); // Transmit the message to the UART
+            HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); 
+            HAL_Delay(1000); // Delay for 1 second
+ 
       }
       
-    /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }

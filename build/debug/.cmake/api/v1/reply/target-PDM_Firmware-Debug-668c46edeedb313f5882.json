@@ -121,7 +121,8 @@
 				24,
 				25,
 				26,
-				27
+				27,
+				28
 			]
 		},
 		{
@@ -172,7 +173,7 @@
 			"language" : "ASM",
 			"sourceIndexes" : 
 			[
-				28
+				29
 			]
 		}
 	],
@@ -232,14 +233,15 @@
 				24,
 				25,
 				26,
-				27
+				27,
+				28
 			]
 		},
 		{
 			"name" : "",
 			"sourceIndexes" : 
 			[
-				28
+				29
 			]
 		}
 	],
@@ -267,6 +269,12 @@
 			"backtrace" : 2,
 			"compileGroupIndex" : 0,
 			"path" : "Core/Src/can.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "Core/Src/dma.c",
 			"sourceGroupIndex" : 0
 		},
 		{

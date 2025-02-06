@@ -49,6 +49,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint16_t heartbeat_counter = 0;
+uint8_t heartbeat_state = 0;
+
+
 uint16_t current = 0; 
 uint16_t voltage = 0;
 uint16_t rawValeus [2];
@@ -63,10 +67,22 @@ void SystemClock_Config(void);
 
 void PWMDutyCycleSet(uint16_t ChannelName, uint32_t dutyCycle); // Function prototype for setting the duty cycle of the PWM signal
 void SendData(uint16_t raw_voltage); // Function prototype for sending data over CAN bus
+void heartbeat(void); // Function prototype for sending the heartbeat trigger
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+    heartbeat_counter++; // Increment the heartbeat counter
+  /* USER CODE END TIM3_IRQn 1 */
+}
+
 uint8_t convCompleted = 0; // Variable to check if the conversion is completed
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
@@ -111,10 +127,18 @@ int main(void)
   MX_CAN_Init();
   MX_USART1_UART_Init();
   MX_TIM4_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)rawValeus, 2); // Start the ADC in DMA mode
 
- 
+     if (HAL_TIM_Base_Start_IT(&htim3) != HAL_OK)
+  {
+    /* Starting Error */
+    Error_Handler();
+  }
+
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_3_Pin, GPIO_PIN_SET); // Turn on the LED
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -131,10 +155,8 @@ int main(void)
             voltage = rawValeus[1]; // Voltage value
         }
 
-        SendData(voltage); // Send the voltage value over CAN bus  
-        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); 
-        HAL_Delay(1000); // Delay for 1 second
- 
+        SendData(voltage); // Send the voltage value over CAN bus 
+        heartbeat(); // Send the heartbeat trigger
       }
       
 
@@ -189,6 +211,29 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void heartbeat(void)
+{
+
+  if (heartbeat_state<= 2 && heartbeat_counter >= 1){
+    
+      HAL_GPIO_TogglePin(GPIOC, Led_Debug_3_Pin); // Toggle the LED
+      heartbeat_state ++;
+      heartbeat_counter = 0;
+    
+    
+  } else{
+    if (heartbeat_counter >= 7) // 700 ms
+    {
+      HAL_GPIO_TogglePin(GPIOC, Led_Debug_3_Pin); // Toggle the LED
+      heartbeat_state = 0;
+      heartbeat_counter = 0;
+    }
+    
+
+    }
+  
+}
+
 
 
 void SendData(uint16_t raw_voltage)

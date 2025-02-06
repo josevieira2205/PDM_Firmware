@@ -220,16 +220,15 @@ void heartbeat(void)
       heartbeat_state ++;
       heartbeat_counter = 0;
     
-    
   } else{
-    if (heartbeat_counter >= 7) // 700 ms
-    {
+    if (heartbeat_counter >= 7){ // 700 ms
+
       HAL_GPIO_TogglePin(GPIOC, Led_Debug_3_Pin); // Toggle the LED
       heartbeat_state = 0;
       heartbeat_counter = 0;
-    }
     
-
+      }
+    
     }
   
 }

@@ -39,6 +39,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+#define BUFFER_SIZE 10 // Tamanho do buffer circular
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +51,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint16_t voltage_buffer[BUFFER_SIZE] = {0}; // Buffer circular para armazenar os valores de tensão
+uint8_t buffer_index = 0; // Índice do buffer circular
+uint32_t voltage_sum = 0; 
+
 uint16_t adc_counter = 0;
 uint8_t data_trigger = 0;
 uint16_t lv_counter = 0;
@@ -97,11 +103,19 @@ void TIM3_IRQHandler(void)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
+  voltage_sum -= voltage_buffer[buffer_index]; // Subtraia o valor antigo da soma
   for (uint8_t i = 0; i < hadc1.Init.NbrOfConversion; i++){
     current = rawValeus[0]; // Current value
-    raw_voltage = rawValeus[1]; // Voltage value
+    voltage_buffer[buffer_index] = rawValeus[1];
 }
-
+  voltage_sum += voltage_buffer[buffer_index]; // Adicione o novo valor à soma
+  buffer_index = (buffer_index + 1); // Atualize o índice do buffer circular
+  raw_voltage = voltage_sum / BUFFER_SIZE;   // Calcule a média dos valores no buffer circular
+  if (buffer_index == BUFFER_SIZE)
+  {
+    buffer_index = 0;
+  }
+  
 
 }
 /* USER CODE END 0 */
@@ -150,7 +164,25 @@ int main(void)
     Error_Handler();
   }
 
-  HAL_GPIO_WritePin(GPIOC, Led_Debug_3_Pin, GPIO_PIN_SET); // Turn on the LED
+for (uint8_t i = 0; i < 3; i++)
+{
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_1_Pin, GPIO_PIN_SET);
+  HAL_Delay(50);
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_2_Pin, GPIO_PIN_SET);
+  HAL_Delay(50);
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_3_Pin, GPIO_PIN_SET);
+  HAL_Delay(50);
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_1_Pin, GPIO_PIN_RESET);
+  HAL_Delay(50);
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_2_Pin, GPIO_PIN_RESET);
+  HAL_Delay(50);
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_3_Pin, GPIO_PIN_RESET);
+  HAL_Delay(50);
+}
+HAL_Delay(300);
+
+
+  HAL_GPIO_WritePin(GPIOC, Led_Debug_1_Pin, GPIO_PIN_SET); // Turn on the LED
 
   /* USER CODE END 2 */
 
@@ -162,12 +194,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-
         StartADC1(); // Start the ADC
         VoltageMessure(raw_voltage); // Send the voltage value over CAN bus 
         heartbeat(); // Send the heartbeat trigger
-
-
 
   }
   /* USER CODE END 3 */
@@ -275,31 +304,31 @@ void VoltageMessure(uint16_t raw_voltage){
     switch (lv_state){
     case 2:
         lv_counter = 0;
-        HAL_GPIO_WritePin(GPIOC, Led_Debug_3_Pin, GPIO_PIN_SET); // Turn on the LED
+        HAL_GPIO_WritePin(GPIOC, Led_Debug_2_Pin, GPIO_PIN_SET); // Turn on the LED
         break;
       
     case 1:
       if (lv_counter >= 7){ // 500 ms
         lv_counter = 0;
-        HAL_GPIO_TogglePin(GPIOC, Led_Debug_3_Pin); // Turn on the LED
+        HAL_GPIO_TogglePin(GPIOC, Led_Debug_2_Pin); // Turn on the LED
       }
       break;
 
     case 0:
       if (lv_counter >= 2){ // 100 ms
         lv_counter = 0;
-        HAL_GPIO_TogglePin(GPIOC, Led_Debug_3_Pin); // Turn off the LED
+        HAL_GPIO_TogglePin(GPIOC, Led_Debug_2_Pin); // Turn off the LED
       } 
       break;
 
     default:
       lv_counter = 0;
-      HAL_GPIO_WritePin(GPIOC, Led_Debug_3_Pin, GPIO_PIN_RESET); // Turn on the LED
+      HAL_GPIO_WritePin(GPIOC, Led_Debug_2_Pin, GPIO_PIN_RESET); // Turn on the LED
       break;
     }
 
 
-    if (data_trigger >= 10){ // 1000 ms
+    if (data_trigger >= 1){ // 1000 ms
       data_trigger = 0;
       sprintf(msg, "Voltage: %d.%03d\n ",voltage_int,voltage_frac); // Print the current and voltage values
       HAL_UART_Transmit(&huart1, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY); // Transmit the message to the UART
